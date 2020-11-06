@@ -1,4 +1,7 @@
 require 'webrick'
+require 'erb'
+
+include WEBrick
 
 op = {
     BindAdress: "127.0.1",
@@ -6,15 +9,28 @@ op = {
     DocumentRoot: "."
 }
 
-WEBrick::HTTPServlet::FileHandler.add_handler("erb", WEBrick::HTTPServlet::ERBHandler)
-s = WEBrick::HTTPServer.new(op)
+s = HTTPServer.new(op)
 
-# 以下、URLと表示ファイルの個別設定
-s.mount('/', WEBrick::HTTPServlet::CGIHandler, 'home.rb')
-s.mount('/next', WEBrick::HTTPServlet::CGIHandler, 'next.rb')
+# サーブレット
+class HomeServlet < HTTPServlet::AbstractServlet
+    def do_GET(req, res)
+        @home_string = "pass homeServlet"
+        res['Content-Type'] = "text/html"
+        erb = ERB.new File.open('app/views/basic_pages/home.html.erb').read
+        res.body = erb.result(binding)
+    end
+end
 
-# 以下、URLと表示ファイルの個別設定
-s.mount('/', WEBrick::HTTPServlet::FileHandler, 'app/views/basic_pages/home.html.erb')
-s.mount('/next', WEBrick::HTTPServlet::FileHandler, 'app/views/basic_pages/next.html.erb')
+class NextServlet < HTTPServlet::AbstractServlet
+    def do_GET(req, res)
+        @next_string = "pass nextServlet"
+        res['Content-Type'] = "text/html"
+        erb = ERB.new File.open('app/views/basic_pages/next.html.erb').read
+        res.body = erb.result(binding)
+    end
+end
 
+s.mount('/', HomeServlet)
+s.mount('/next', NextServlet)
+trap(:INT){ s.shutdown }
 s.start
