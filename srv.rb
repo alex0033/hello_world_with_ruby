@@ -1,6 +1,4 @@
 require 'webrick'
-require 'erb'
-
 include WEBrick
 
 op = {
@@ -11,26 +9,11 @@ op = {
 
 s = HTTPServer.new(op)
 
-# サーブレット
-class HomeServlet < HTTPServlet::AbstractServlet
-    def do_GET(req, res)
-        @home_string = "pass homeServlet"
-        res['Content-Type'] = "text/html"
-        erb = ERB.new File.open('app/views/basic_pages/home.html.erb').read
-        res.body = erb.result(binding)
-    end
-end
-
-class NextServlet < HTTPServlet::AbstractServlet
-    def do_GET(req, res)
-        @next_string = "pass nextServlet"
-        res['Content-Type'] = "text/html"
-        erb = ERB.new File.open('app/views/basic_pages/next.html.erb').read
-        res.body = erb.result(binding)
-    end
-end
+require './app/controllers/basic_pages_controller.rb'
+include BasicPagesController
 
 s.mount('/', HomeServlet)
 s.mount('/next', NextServlet)
+
 trap(:INT){ s.shutdown }
 s.start
